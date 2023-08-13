@@ -1,56 +1,31 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { ClipLoader } from "react-spinners";
 import { useParams } from "react-router-dom";
-import { toast } from "react-toastify";
-import api from "../apiService";
 import { Container, Button, Box, Grid, Stack, Typography } from "@mui/material";
+
+import { useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
+import { addingBook, getBookDetail } from "../features/book/bookSlice";
 
 
 const BACKEND_API = process.env.REACT_APP_BACKEND_API;
 
 const BookDetailPage = () => {
-  const [loading, setLoading] = useState(false);
-  const [book, setBook] = useState(null);
-  const [addingBook, setAddingBook] = useState(false);
+
+  const dispatch = useDispatch();
+  const book = useSelector((state) => state.books.bookDetail);
+  const status = useSelector((state) => state.books.status);
+
   const params = useParams();
   const bookId = params.id;
 
-  const addToReadingList = (book) => {
-    setAddingBook(book);
-  };
-
   useEffect(() => {
-    const postData = async () => {
-      if (!addingBook) return;
-      setLoading(true);
-      try {
-        await api.post(`/favorites`, addingBook);
-        toast.success("The book has been added to the reading list!");
-      } catch (error) {
-        toast.error(error.message);
-      }
-      setLoading(false);
-    };
-    postData();
-  }, [addingBook]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const res = await api.get(`/books/${bookId}`);
-        setBook(res.data);
-      } catch (error) {
-        toast.error(error.message);
-      }
-      setLoading(false);
-    };
-    fetchData();
-  }, [bookId]);
+    dispatch(getBookDetail(bookId));
+  }, [dispatch, bookId]);
 
   return (
     <Container>
-      {loading ? (
+      {status === "loading" ? (
         <Box sx={{ textAlign: "center", color: "primary.main" }} >
           <ClipLoader color="#inherit" size={150} loading={true} />
         </Box>
@@ -84,7 +59,7 @@ const BookDetailPage = () => {
                 <Typography variant="body1">
                   <strong>Language:</strong> {book.language}
                 </Typography>
-                <Button variant="outlined" sx={{ width: "fit-content" }} onClick={() => addToReadingList(book)}>
+                <Button variant="outlined" sx={{ width: "fit-content" }} onClick={() => dispatch(addingBook(book))}>
                   Add to Reading List
                 </Button>
               </Stack>
